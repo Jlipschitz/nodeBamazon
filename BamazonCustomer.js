@@ -6,7 +6,7 @@ var mysql = require('mysql');
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'o98HY^%',
+    password: '',
     database: 'bamazon'
 });
 
@@ -21,6 +21,9 @@ var dialogue = {
     quantityID: "Enter the quantity you would like to purchase",
     supplyLow: function () {
         console.log("Insufficient quantity, sorry!");
+    },
+    thankYou: function () {
+        console.log("Thank you for shopping with us! Have a look at more of our items");
     }
 }
 var schema = {
@@ -43,32 +46,42 @@ var schema = {
 connection.query('SELECT * FROM products', function (err, data) {
     if (err) throw err;
 
-    console.log("PRODUCTS FOR SALE:")
-    dialogue.separate();
-    dialogue.space();
-
-    for (var i = 0; i < data.length; i++) {
-        console.log("Name: " + data[i].ProductName + "  || Price: $" + data[i].Price + "  || ID: " + data[i].ItemID);
+    function displayItems() {
+        dialogue.separate();
         dialogue.space();
+
+        for (var i = 0; i < data.length; i++) {
+            console.log("Name: " + data[i].ProductName + "  || Price: $" + data[i].Price + "  || ID: " + data[i].ItemID);
+            dialogue.space();
+        }
     }
+    console.log("Products for sale:")
+    displayItems();
     prompt.start();
 
-    prompt.get(schema, function (err, result) {
-        connection.query('SELECT * FROM products WHERE ItemID = ' + result.itemID, function (err, res) {
+    function customerEntersStore() {
+        prompt.get(schema, function (err, result) {
+            connection.query('SELECT * FROM products WHERE ItemID = ' + result.itemID, function (err, res) {
 
-            if (res[0].StockQuantity >= result.quantity) {
-                dialogue.space();
-                console.log("Your order total is: $ " + result.quantity * res[0].Price)
+                if (res[0].StockQuantity >= result.quantity) {
+                    dialogue.space();
+                    console.log("Your order total is: $ " + result.quantity * res[0].Price)
 
-                connection.query("UPDATE products SET products.StockQuantity = " + (res[0].StockQuantity - result.quantity) + " WHERE ItemID = " + result.itemID, function (error, updateData) {
-                    if (error) throw error;
-                });
-            } else {
-                dialogue.space();
-                dialogue.supplyLow();
-            }
-        })
-    });
+                    connection.query("UPDATE products SET products.StockQuantity = " + (res[0].StockQuantity - result.quantity) + " WHERE ItemID = " + result.itemID, function (error, updateData) {
+                        if (error) throw error;
+                        dialogue.thankYou();
+                        displayItems();
+                        customerEntersStore();
+                    });
+                } else {
+                    dialogue.space();
+                    dialogue.supplyLow();
+                    customerEntersStore();
+                }
+            })
+        });
+    }
+    customerEntersStore();
 });
 
 
