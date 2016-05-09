@@ -9,3 +9,12 @@ var connection = mysql.createConnection({
     password: '',
     database: 'bamazon'
 });
+
+var dialogue = {
+    execOptionsLog: function () {
+        console.log('1) View Products Sales by Department ' + '\n' + '2) Create New Department ');
+    },
+    space: function () {
+        console.log("");
+    },
+}
