@@ -22,14 +22,16 @@ var dialogue = {
     },
     selectOption: "Please select an option \n",
     invalidOption: "You're request was not valid. Please try again \n",
-    restockOption: "What item would you like to restock more of? \n",
+    restock: {
+        askID: "What is the ID of the item you would like to restock? \n",
+        howMany: "What is the quantity you would to add? \n"
+    },
     more: {
         askName: "Please enter the item name \n",
         askDepartment: "Please enter the item's department \n",
         askPrice: "Please enter the item price \n",
         askStock: "Please enter the stock quantity \n",
     }
-
 }
 
 var schema = {
@@ -45,8 +47,14 @@ var schema = {
     },
     restockPrompt: {
         properties: {
-            restock: {
-                description: dialogue.restockOption,
+            restockID: {
+                description: dialogue.restock.askID,
+                type: "integer",
+                message: dialogue.invalidOption,
+                required: true
+            },
+            restockQuantity: {
+                description: dialogue.restock.howMany,
                 type: "integer",
                 message: dialogue.invalidOption,
                 required: true
@@ -109,9 +117,18 @@ var managerLevelEngine = {
         })
     },
     three: function (id, stock) {
-        connection.query('UPDATE products SET products.StockQuantity', function (err, data) {
-            if (err) throw err;
-            managerStart();
+        connection.query('SELECT * FROM products WHERE products.ItemID = ' + id, function (error, result) {
+            console.log('SELECT * FROM products WHERE products.ItemID = ' + id)
+            if (result === null || result == undefined) {
+                console.log("Sorry this is not a valid option. Returning to main screen");
+                dialogue.space();
+                managerStart();
+            } else {
+                connection.query('UPDATE products SET products.StockQuantity = ? WHERE products.ItemID = ? ', [(parseInt(stock) + parseInt(result[0].StockQuantity)), id], function (err, data) {
+                    if (err) throw err;
+                    managerStart();
+                })
+            }
         })
     },
     four: function (name, depart, setPrice, quant) {
@@ -136,7 +153,7 @@ function managerStart() {
                 break;
             case 3:
                 prompt.get(schema.restockPrompt, function (err, results) {
-                    managerLevelEngine.three();
+                    managerLevelEngine.three(results.restockID, results.restockQuantity);
                 });
                 break;
             case 4:
