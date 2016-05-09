@@ -32,24 +32,25 @@ var dialogue = {
 }
 
 var schema = {
-    properties: {
-        itemID: {
-            description: dialogue.shopID,
-            type: "integer",
-            message: dialogue.invalidPrompt,
-            required: true
-        },
-    }
-};
-
-var schema2 = {
-    properties: {
-        quantity: {
-            description: dialogue.quantityID,
-            type: "integer",
-            message: dialogue.invalidPrompt,
-            required: true
-        },
+    selectAll: {
+        properties: {
+            itemID: {
+                description: dialogue.shopID,
+                type: "integer",
+                message: dialogue.invalidPrompt,
+                required: true
+            }
+        }
+    },
+    quantity: {
+        properties: {
+            quantity: {
+                description: dialogue.quantityID,
+                type: "integer",
+                message: dialogue.invalidPrompt,
+                required: true
+            }
+        }
     }
 };
 
@@ -72,7 +73,7 @@ connection.query('SELECT * FROM products', function (err, data) {
 
     promptEngine = {
         customerEntersStore: function () {
-            prompt.get(schema, function (err, result) {
+            prompt.get(schema.selectAll, function (err, result) {
                 console.log(result)
                 connection.query('SELECT * FROM products WHERE ItemID = ' + result.itemID, function (err, res) {
                     console.log(res)
@@ -88,12 +89,10 @@ connection.query('SELECT * FROM products', function (err, data) {
             })
         },
         customerPurchase: function (passName, passID, passQuantity, passPrice, passDepartment) {
-            prompt.get(schema2, function (err, results) {
-                console.log(passQuantity, results.quantity)
+            prompt.get(schema.quantity, function (err, results) {
                 if (passQuantity >= results.quantity) {
                     console.log(passName, passID, passQuantity, passPrice, passDepartment)
                     dialogue.space();
-                    console.log("Your order total is: $ " + (passQuantity * passPrice))
 
                     connection.query("UPDATE products SET products.StockQuantity = " + (passQuantity - results.quantity) + " WHERE ItemID = " + passID, function (error, updateData) {
                         dialogue.thankYou();
